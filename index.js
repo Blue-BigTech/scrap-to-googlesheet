@@ -6,6 +6,7 @@ const hostname = '127.0.0.1';
 const port = 3000;
 var page = null;
 var bScrapping = false
+var bUpdating = false
 var ListData = null
 const server = createServer((req, res) => {
   res.statusCode = 200;
@@ -30,6 +31,7 @@ const fetchAll = async () => {
     const arr = Array.from(JSON.parse(data)).map(record => {
       if(record.Address !== ""){
         return {
+          id: record.Id,
           addr: record.Address,
           bill: extractNumber(record.Bills),
           update: true
@@ -44,23 +46,49 @@ const fetchAll = async () => {
   }));
 }
 
+const _AddNew = (item, id) => {
+  let bIs = false
+  const cnt = ListData.length
+  if(id >= cnt){
+    bIs = true
+    ListData.push(item)
+  } else {
+    if(ListData[id].addr !== item.addr || ListData[id].bill !== item.bill){
+      ListData[id].addr = item.addr
+      ListData[id].bill = item.bill
+      ListData[id].update = true
+      bIs = true
+    }
+  }
+  return bIs
+}
+
+const detectUpdate = async () => {
+  const newArr = await fetchAll()
+  const newCnt = newArr.length
+  for(let i=0; i<newCnt; i++){
+    if(_AddNew(newArr[i], i))
+      console.log("new address\n")
+  }
+}
+
 const scrapByAdressList = async () => {
   if(bScrapping){
     return
   }
+  await detectUpdate()
   bScrapping = true
   const count = ListData.length
   for(let i=0; i<count; i++){
     if(ListData[i].update){
       ListData[i].update = false
-      console.log(ListData[i]);
-      await scrapFunc(ListData[i].addr, ListData[i].bill)
+      await scrapFunc(ListData[i].addr, ListData[i].bill, ListData[i].id)
     }
   }
   bScrapping = false
 }
 
-const scrapFunc = async (address, bill) => {
+const scrapFunc = async (address, bill, id) => {
   try{
     await page.type('#input-0', address);
     try{
@@ -97,7 +125,6 @@ const scrapFunc = async (address, bill) => {
     }
   
     await page.waitForSelector(s_Selector)
-    // await page.click(s_Selector)
     await page.focus(s_Selector)
     await page.keyboard.press('Enter')
  
@@ -113,7 +140,21 @@ const scrapFunc = async (address, bill) => {
     let sq = await page.evaluate(() => {
       return document.querySelector('body > div.view-wrap > address-view > div.main-content-wrapper > div > div > section.section.section-map > div.address-map-panel > md-card:nth-child(2) > ul > li:nth-child(2) > div.panel-fact-text.md-body').innerText
     })
-    console.log(extractNumber(hours), extractNumber(sq), kw_bill)
+    console.log(extractNumber(hours), extractNumber(sq), kw_bill.replace(" kW", ""))
+    client.update(
+      'Id', id,
+      { 
+        'Total Hours': extractNumber(hours), 
+        'Total Sqft': extractNumber(sq),
+        'Total KW': kw_bill.replace(" kW", "")
+      },
+      'Google Sunroof'
+    ).then(function (data) {
+        console.log(data);
+    }, function (err) {
+        console.log(err);
+    });
+
     await page.waitForTimeout(500)
   }
   catch(e){
@@ -123,16 +164,15 @@ const scrapFunc = async (address, bill) => {
 
 (async () => {
   ListData = await fetchAll();
+  console.log(ListData)
   // return
   const browser = await puppeteer.launch({
     executablePath: 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-    // product: 'firefox',
     headless: false
   })
   page = await browser.newPage()
   await page.goto('https://sunroof.withgoogle.com/building/40.7331699/-73.2639021/#?f=buy&b=90')
   
-  setInterval(scrapByAdressList, 000)
-  // await scrapByAdressList()
+  setInterval(scrapByAdressList, 1000)
   // browser.close()
 })();
