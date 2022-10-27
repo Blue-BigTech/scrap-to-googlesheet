@@ -6,7 +6,6 @@ const hostname = '127.0.0.1';
 const port = 3000;
 var page = null;
 var bScrapping = false
-var bUpdating = false
 var ListData = null
 const server = createServer((req, res) => {
   res.statusCode = 200;
@@ -18,7 +17,7 @@ server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
 
-const client = sheetdb({ address: 'plzoqxqw4y5iq' });
+const client = sheetdb({ address: 'idd4bc1hqx5tj' });
 
 const extractNumber = (str) => {
   let num = str.match(/\d/g);
@@ -90,6 +89,7 @@ const scrapByAdressList = async () => {
 
 const scrapFunc = async (address, bill, id) => {
   try{
+    console.log(address)
     await page.type('#input-0', address);
     try{
       await page.waitForSelector('#md-option-0-0')
@@ -166,13 +166,14 @@ const scrapFunc = async (address, bill, id) => {
   ListData = await fetchAll();
   console.log(ListData)
   // return
-  const browser = await puppeteer.launch({
-    executablePath: 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-    headless: false
-  })
+  const browser = await puppeteer.launch()
+  // const browser = await puppeteer.launch({
+  //     executablePath: 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  //   headless: false
+  // })
   page = await browser.newPage()
   await page.goto('https://sunroof.withgoogle.com/building/40.7331699/-73.2639021/#?f=buy&b=90')
   
-  setInterval(scrapByAdressList, 1000)
+  setInterval(scrapByAdressList, 3000)
   // browser.close()
 })();
