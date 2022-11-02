@@ -9,10 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/local-auth": "^2.1.1",
-    "google-auth-library": "^8.6.0",
-    "googleapis": "^108.0.1",
-    "puppeteer": "^19.1.2",
-    "sheetdb-node": "^0.0.12"
+    "axios": "^1.1.3",
+    "puppeteer": "^19.1.2"
   }
 }
