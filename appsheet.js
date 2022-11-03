@@ -1,6 +1,8 @@
 const axios = require('axios');
-
-const url = 'https://api.appsheet.com/api/v2/apps/c3cc4f34-fbd3-4874-b02d-fb62343bf80d/tables/sunroof/Action?applicationAccessKey=V2-7JulX-pqnrF-oDwlD-NsCai-1hJhS-uQ5YN-1ah6d-iRxFC'
+const appID = "f884040f-e63e-4411-b719-3e783a56246a"
+const tblName = "Sunroof"
+const apiKey = "V2-LLNRU-9isZM-tSdhw-nDOMO-l2Mym-RQVLq-L6TPL-1gPpk"
+const url = 'https://api.appsheet.com/api/v2/apps/' + appID + '/tables/'+ tblName +'/Action?applicationAccessKey=' + apiKey
 const read = () => {
     axios({
         method: 'post',
@@ -11,10 +13,6 @@ const read = () => {
                 "Locale": "en-US",
             },
             "Rows": [
-                {
-                    "Id": "1",
-                    "Bills": "450",
-                }
             ]
         }
     }).then(response => {
@@ -45,4 +43,4 @@ const write = () => {
     })
 }
 read()
-write()
+// write()

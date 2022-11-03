@@ -174,6 +174,6 @@ const scrapFunc = async (address, bill, id) => {
   page = await browser.newPage()
   await page.goto('https://sunroof.withgoogle.com/building/40.7331699/-73.2639021/#?f=buy&b=90')
   
-  setInterval(scrapByAdressList, 3000)
+  setInterval(scrapByAdressList, 5000)
   // browser.close()
 })();

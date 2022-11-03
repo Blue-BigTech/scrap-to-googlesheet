@@ -1,12 +1,17 @@
 const {createServer} = require('http');
 const puppeteer = require('puppeteer')
+const axios = require('axios')
 
 const hostname = '127.0.0.1';
 const port = 3000;
 var page = null;
 var bScrapping = false
 var ListData = null
-var auth = null
+
+const appID = "4e8a89a1-ad1e-40c3-ad69-d1736da8ec8f"
+const tblName = "Sunroof"
+const apiKey = "V2-huKTT-gDxM6-IHs4Q-z8mWS-FnAQr-qbQ5H-RkmoO-gwRqQ"
+const url = 'https://api.appsheet.com/api/v2/apps/' + appID + '/tables/'+ tblName +'/Action?applicationAccessKey=' + apiKey
 
 const server = createServer((req, res) => {
   res.statusCode = 200;
@@ -32,25 +37,29 @@ const extractNumber = (str) => {
 }
 
 async function readDataAPI() {
-  const sheets = google.sheets({version: 'v4', auth});
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: '1Nx4Rsm-S0hXCx3X2OcbWiKi0Kl0CB9v37DjN7HdXYZQ',
-    range: 'Google Sunroof!A2:C',
-  });
-  const rows = res.data.values;
+  let res = await axios({
+    method: 'post',
+    url: url,
+    data: {
+        "Action": "Find",
+        "Properties": {
+            "Locale": "en-US",
+        },
+        "Rows": [
+        ]
+    }
+  })
+  let rows = res.data
   if (!rows || rows.length === 0) {
     console.log('No data found.');
     return;
   }
-
   const arr = Array.from(rows).map(record => {
-    if(record.Address !== ""){
-      return {
-        id: record[0],
-        addr: record[1],
-        bill: extractNumber(record[2]),
-        update: true
-      }
+    return {
+      id: record.Id,
+      addr: record.Address,
+      bill: record.Bills,
+      update: true
     }
   });
   return arr.filter((item) => {
@@ -58,27 +67,36 @@ async function readDataAPI() {
   })
 }
 
-async function writeDataAPI(id, hours, sp, kw_bill, usage) {
-  const sheets = google.sheets({version: 'v4', auth});
-  const request = {
-    spreadsheetId: "1Nx4Rsm-S0hXCx3X2OcbWiKi0Kl0CB9v37DjN7HdXYZQ",
-    // range: "Google Sunroof!D2:G",
-    range: "Google Sunroof!D" + id + ":G",
-    valueInputOption: "USER_ENTERED",
-    resource: {values: [
-      [hours, sp, kw_bill, usage]
-    ]},
-    auth: auth,
-  }
-  const response = await sheets.spreadsheets.values.update(request);
+async function writeDataAPI(id, totalHours, totalSq, totalKW, usage) {
+  axios({
+    method: 'post',
+    url: url,
+    data: {
+        "Action": "Edit",
+        "Properties": {
+            "Locale": "en-US",
+        },
+        "Rows": [
+            {
+                "Id": id,
+                "Total hours": totalHours,
+                "Total Sqft": totalSq,
+                "Total KW": totalKW,
+                "Usage": usage,
+            }
+        ]            
+    }
+  }).then(res =>{
+    console.log(`${res.status}, write one`)
+  })
 }
 
 const fetchAll = async () =>{
   return await readDataAPI()
 }
 
-const updateData = async (id, hours, sp, kw_bill, usage) =>{
-  await writeDataAPI(parseInt(id)+1, hours, sp, kw_bill, usage)
+const updateData = async (id, totalHours, totalSq, totalKW, usage) =>{
+  await writeDataAPI(id, totalHours, totalSq, totalKW, usage)
 }
 
 
@@ -104,7 +122,6 @@ const _AddNew = (item, id) => {
 
 const detectUpdate = async () => {
   const newArr = await fetchAll()
-  console.log(newArr)
   const newCnt = newArr.length
   for(let i=0; i<newCnt; i++){
     if(_AddNew(newArr[i], i))
@@ -196,10 +213,10 @@ const scrapFunc = async (address, bill, id) => {
 }
 
 (async () => {
-  auth = await authorize()
   ListData = await fetchAll();
 
   console.log(ListData)
+  // return
   const browser = await puppeteer.launch()
   // const browser = await puppeteer.launch({
   //     executablePath: 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
