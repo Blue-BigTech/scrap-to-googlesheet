@@ -1,1 +1,0 @@
-# scrap-to-googlesheet
