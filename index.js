@@ -68,7 +68,7 @@ async function readDataAPI() {
 }
 
 async function writeDataAPI(id, totalHours, totalSq, totalKW, usage) {
-  axios({
+  await axios({
     method: 'post',
     url: url,
     data: {
@@ -152,6 +152,8 @@ const scrapFunc = async (address, bill, id) => {
     try{
       await page.waitForSelector('#md-option-0-0')
     }catch(e){
+      console.log("Wrong Address")
+      await updateData(id, -1, -1, -1, -1)
       return
     }
     await page.keyboard.press('Enter')
@@ -159,8 +161,15 @@ const scrapFunc = async (address, bill, id) => {
     await page.waitForNavigation({
       waitUntil: 'load',
     });
-    await page.waitForSelector('body > div.view-wrap > address-view > div.main-content-wrapper > div > div > section.section.section-fine-tune > div > md-content.md-padding._md.layout-gt-sm-row.layout-column > div:nth-child(2) > md-card > md-card-content > div > div.recommended-kw')
-  
+
+    try{
+      await page.waitForSelector('body > div.view-wrap > address-view > div.main-content-wrapper > div > div > section.section.section-fine-tune > div > md-content.md-padding._md.layout-gt-sm-row.layout-column > div:nth-child(2) > md-card > md-card-content > div > div.recommended-kw')
+    }catch(e){
+      await updateData(id, -1, -1, -1, -1)
+      console.log("Can't extract data")
+      return
+    }
+
     await page.waitForSelector('#select_value_label_1')
     await page.click('#select_value_label_1')
 
