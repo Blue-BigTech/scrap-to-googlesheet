@@ -150,7 +150,7 @@ const scrapFunc = async (address, bill, id) => {
     console.log(address)
     await page.type('#input-0', address);
     try{
-      await page.waitForSelector('#md-option-0-0')
+      await page.waitForSelector('#md-option-0-0', {timeout : 15000})
     }catch(e){
       console.log("Wrong Address")
       await updateData(id, -1, -1, -1, -1)
@@ -163,7 +163,7 @@ const scrapFunc = async (address, bill, id) => {
     });
 
     try{
-      await page.waitForSelector('body > div.view-wrap > address-view > div.main-content-wrapper > div > div > section.section.section-fine-tune > div > md-content.md-padding._md.layout-gt-sm-row.layout-column > div:nth-child(2) > md-card > md-card-content > div > div.recommended-kw')
+      await page.waitForSelector('body > div.view-wrap > address-view > div.main-content-wrapper > div > div > section.section.section-fine-tune > div > md-content.md-padding._md.layout-gt-sm-row.layout-column > div:nth-child(2) > md-card > md-card-content > div > div.recommended-kw', {timeout : 10000})
     }catch(e){
       await updateData(id, -1, -1, -1, -1)
       console.log("Can't extract data")
